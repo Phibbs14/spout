@@ -42,6 +42,8 @@ EOD;
     /** @var int Index of the last written row */
     protected $lastWrittenRowIndex = 0;
 
+    protected $columnSettings;
+
     /**
      * @param \Box\Spout\Writer\Common\Sheet $externalSheet The associated "external" sheet
      * @param string $worksheetFilesFolder Temporary folder where the files to create the XLSX will be stored
@@ -49,11 +51,12 @@ EOD;
      * @param bool $shouldUseInlineStrings Whether inline or shared strings should be used
      * @throws \Box\Spout\Common\Exception\IOException If the sheet data file cannot be opened for writing
      */
-    public function __construct($externalSheet, $worksheetFilesFolder, $sharedStringsHelper, $shouldUseInlineStrings)
+    public function __construct($externalSheet, $worksheetFilesFolder, $sharedStringsHelper, $shouldUseInlineStrings, $columnSettings)
     {
         $this->externalSheet = $externalSheet;
         $this->sharedStringsHelper = $sharedStringsHelper;
         $this->shouldUseInlineStrings = $shouldUseInlineStrings;
+        $this->columnSettings = $columnSettings;
 
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->stringsEscaper = new \Box\Spout\Common\Escaper\XLSX();
@@ -73,7 +76,8 @@ EOD;
         $this->sheetFilePointer = fopen($this->worksheetFilePath, 'w');
         $this->throwIfSheetFilePointerIsNotAvailable();
 
-        fwrite($this->sheetFilePointer, self::SHEET_XML_FILE_HEADER);
+        $this->writeColumnSettings();
+        
         fwrite($this->sheetFilePointer, '<sheetData>');
     }
 
@@ -146,7 +150,7 @@ EOD;
                     $cellXML .= ' t="s"><v>' . $sharedStringId . '</v></c>';
                 }
             } else if (CellHelper::isBoolean($cellValue)) {
-                    $cellXML .= ' t="b"><v>' . intval($cellValue) . '</v></c>';
+                $cellXML .= ' t="b"><v>' . intval($cellValue) . '</v></c>';
             } else if (CellHelper::isNumeric($cellValue)) {
                 $cellXML .= '><v>' . $cellValue . '</v></c>';
             } else if (empty($cellValue)) {
@@ -181,5 +185,18 @@ EOD;
         fwrite($this->sheetFilePointer, '</sheetData>');
         fwrite($this->sheetFilePointer, '</worksheet>');
         fclose($this->sheetFilePointer);
+    }
+
+    protected function writeColumnSettings() {
+        if (empty($this->columnSettings))
+            return;
+        fwrite($this->sheetFilePointer, self::SHEET_XML_FILE_HEADER);
+        $cSettings = [];
+        foreach ($this->columnSettings as $setting) {
+            $cSettings[] = "<col min=\"{$setting['min']}\" max=\"{$setting['max']}\" width=\"{$setting['width']}\" customWidth=\"1\"/>";
+        }
+        if (!empty($cSettings)) {
+            fwrite($this->sheetFilePointer, "<cols>".implode('', $cSettings)."</cols>");
+        }
     }
 }

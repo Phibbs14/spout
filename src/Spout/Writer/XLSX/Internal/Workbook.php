@@ -35,6 +35,8 @@ class Workbook extends AbstractWorkbook
     /** @var \Box\Spout\Writer\XLSX\Helper\StyleHelper Helper to apply styles */
     protected $styleHelper;
 
+    protected $columnSettings;
+
     /**
      * @param string $tempFolder
      * @param bool $shouldUseInlineStrings
@@ -42,11 +44,12 @@ class Workbook extends AbstractWorkbook
      * @param \Box\Spout\Writer\Style\Style $defaultRowStyle
      * @throws \Box\Spout\Common\Exception\IOException If unable to create at least one of the base folders
      */
-    public function __construct($tempFolder, $shouldUseInlineStrings, $shouldCreateNewSheetsAutomatically, $defaultRowStyle)
+    public function __construct($tempFolder, $shouldUseInlineStrings, $shouldCreateNewSheetsAutomatically, $defaultRowStyle, $columnSettings)
     {
         parent::__construct($shouldCreateNewSheetsAutomatically, $defaultRowStyle);
 
         $this->shouldUseInlineStrings = $shouldUseInlineStrings;
+        $this->columnSettings = $columnSettings;
 
         $this->fileSystemHelper = new FileSystemHelper($tempFolder);
         $this->fileSystemHelper->createBaseFilesAndFolders();
@@ -56,6 +59,7 @@ class Workbook extends AbstractWorkbook
         // This helper will be shared by all sheets
         $xlFolder = $this->fileSystemHelper->getXlFolder();
         $this->sharedStringsHelper = new SharedStringsHelper($xlFolder);
+
     }
 
     /**
@@ -86,7 +90,7 @@ class Workbook extends AbstractWorkbook
         $sheet = new Sheet($newSheetIndex);
 
         $worksheetFilesFolder = $this->fileSystemHelper->getXlWorksheetsFolder();
-        $worksheet = new Worksheet($sheet, $worksheetFilesFolder, $this->sharedStringsHelper, $this->shouldUseInlineStrings);
+        $worksheet = new Worksheet($sheet, $worksheetFilesFolder, $this->sharedStringsHelper, $this->shouldUseInlineStrings, $this->columnSettings);
         $this->worksheets[] = $worksheet;
 
         return $worksheet;
