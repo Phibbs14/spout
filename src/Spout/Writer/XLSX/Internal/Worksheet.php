@@ -75,7 +75,8 @@ EOD;
     {
         $this->sheetFilePointer = fopen($this->worksheetFilePath, 'w');
         $this->throwIfSheetFilePointerIsNotAvailable();
-
+        fwrite($this->sheetFilePointer, self::SHEET_XML_FILE_HEADER);
+        
         $this->writeColumnSettings();
         
         fwrite($this->sheetFilePointer, '<sheetData>');
@@ -190,7 +191,7 @@ EOD;
     protected function writeColumnSettings() {
         if (empty($this->columnSettings))
             return;
-        fwrite($this->sheetFilePointer, self::SHEET_XML_FILE_HEADER);
+        
         $cSettings = [];
         foreach ($this->columnSettings as $setting) {
             $cSettings[] = "<col min=\"{$setting['min']}\" max=\"{$setting['max']}\" width=\"{$setting['width']}\" customWidth=\"1\"/>";
