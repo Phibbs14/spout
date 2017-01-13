@@ -185,4 +185,27 @@ abstract class AbstractWorkbook implements WorkbookInterface
      * @return void
      */
     abstract public function close($finalFilePointer);
+
+    public function addRowStyleFirstCell($dataRow, $defaultStyle, $firstCellStyle) {
+        $currentWorksheet = $this->getCurrentWorksheet();
+        $hasReachedMaxRows = $this->hasCurrentWorkseetReachedMaxRows();
+        $styleHelper = $this->getStyleHelper();
+
+        // if we reached the maximum number of rows for the current sheet...
+        if ($hasReachedMaxRows) {
+            // ... continue writing in a new sheet if option set
+            if ($this->shouldCreateNewSheetsAutomatically) {
+                $currentWorksheet = $this->addNewSheetAndMakeItCurrent();
+            } else {
+                // otherwise, do nothing as the data won't be read anyways
+                return;
+            }
+        }
+
+        $registeredFirstCellStyle = $styleHelper->registerStyle($firstCellStyle);
+
+        $updatedStyle = $styleHelper->applyExtraStylesIfNeeded($defaultStyle, $dataRow);
+        $registeredStyle = $styleHelper->registerStyle($updatedStyle);
+        $currentWorksheet->addRowStyleFirstCell($dataRow, $registeredStyle, $registeredFirstCellStyle);
+    }
 }

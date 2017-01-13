@@ -76,9 +76,9 @@ EOD;
         $this->sheetFilePointer = fopen($this->worksheetFilePath, 'w');
         $this->throwIfSheetFilePointerIsNotAvailable();
         fwrite($this->sheetFilePointer, self::SHEET_XML_FILE_HEADER);
-        
+
         $this->writeColumnSettings();
-        
+
         fwrite($this->sheetFilePointer, '<sheetData>');
     }
 
@@ -191,7 +191,7 @@ EOD;
     protected function writeColumnSettings() {
         if (empty($this->columnSettings))
             return;
-        
+
         $cSettings = [];
         foreach ($this->columnSettings as $setting) {
             $cSettings[] = "<col min=\"{$setting['min']}\" max=\"{$setting['max']}\" width=\"{$setting['width']}\" customWidth=\"1\"/>";
@@ -199,5 +199,58 @@ EOD;
         if (!empty($cSettings)) {
             fwrite($this->sheetFilePointer, "<cols>".implode('', $cSettings)."</cols>");
         }
+    }
+
+    public function addRowStyleFirstCell($dataRow, $defStyle, $firstCellStyle)
+    {
+        $cellNumber = 0;
+        $rowIndex = $this->lastWrittenRowIndex + 1;
+        $numCells = count($dataRow);
+
+        $rowXML = '<row r="' . $rowIndex . '" spans="1:' . $numCells . '">';
+
+        $isFirst = true;
+        foreach($dataRow as $cellValue) {
+            $columnIndex = CellHelper::getCellIndexFromColumnIndex($cellNumber);
+            $cellXML = '<c r="' . $columnIndex . $rowIndex . '"';
+
+            if ($isFirst) {
+                $cellXML .= ' s="' . $firstCellStyle->getId() . '"';
+                $isFirst = false;
+            } else {
+                $cellXML .= ' s="' . $defStyle->getId() . '"';
+            }
+
+            if (CellHelper::isNonEmptyString($cellValue)) {
+                if ($this->shouldUseInlineStrings) {
+                    $cellXML .= ' t="inlineStr"><is><t>' . $this->stringsEscaper->escape($cellValue) . '</t></is></c>';
+                } else {
+                    $sharedStringId = $this->sharedStringsHelper->writeString($cellValue);
+                    $cellXML .= ' t="s"><v>' . $sharedStringId . '</v></c>';
+                }
+            } else if (CellHelper::isBoolean($cellValue)) {
+                $cellXML .= ' t="b"><v>' . intval($cellValue) . '</v></c>';
+            } else if (CellHelper::isNumeric($cellValue)) {
+                $cellXML .= '><v>' . $cellValue . '</v></c>';
+            } else if (empty($cellValue)) {
+                // don't write empty cells (not appending to $cellXML is the right behavior!)
+                $cellXML = '';
+            } else {
+                throw new InvalidArgumentException('Trying to add a value with an unsupported type: ' . gettype($cellValue));
+            }
+
+            $rowXML .= $cellXML;
+            $cellNumber++;
+        }
+
+        $rowXML .= '</row>';
+
+        $wasWriteSuccessful = fwrite($this->sheetFilePointer, $rowXML);
+        if ($wasWriteSuccessful === false) {
+            throw new IOException("Unable to write data in {$this->worksheetFilePath}");
+        }
+
+        // only update the count if the write worked
+        $this->lastWrittenRowIndex++;
     }
 }

@@ -138,4 +138,10 @@ class Writer extends AbstractMultiSheetsWriter
         }
         $this->columnSettings[] = ['width' => $width, 'min' => $min, 'max' => $max];
     }
+
+    public function addRowStyleFirstCell($dataRow, $firstCellStyle) {
+        $this->throwIfBookIsNotAvailable();
+        $this->book->addRowStyleFirstCell($dataRow, $this->rowStyle, $firstCellStyle);
+    }
+
 }
