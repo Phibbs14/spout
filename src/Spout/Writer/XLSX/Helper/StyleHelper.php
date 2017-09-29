@@ -145,9 +145,19 @@ EOD;
                 $content .= ' applyFont="1"';
             }
 
+            $horizontalAlignment = '';
+            if ($style->getHorizontalAlignment()) {
+                $horizontalAlignment = sprintf('horizontal="%s"', $style->getHorizontalAlignment());
+            }
+
+            $wrapText = '';
             if ($style->shouldWrapText()) {
+                $wrapText = 'wrapText="1"';
+            }
+
+            if ($wrapText || $horizontalAlignment) {
                 $content .= ' applyAlignment="1">';
-                $content .= '<alignment wrapText="1"/>';
+                $content .= "<alignment $wrapText $horizontalAlignment />";
                 $content .= '</xf>';
             } else {
                 $content .= '/>';

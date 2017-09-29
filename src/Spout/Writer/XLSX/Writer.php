@@ -132,16 +132,24 @@ class Writer extends AbstractMultiSheetsWriter
         }
     }
 
-    public function setColumnsWidth($width, $min, $max) {
+    public function setColumnsWidth($width, $min, $max)
+    {
         if (empty($this->columnSettings)) {
             $this->columnSettings = [];
         }
         $this->columnSettings[] = ['width' => $width, 'min' => $min, 'max' => $max];
     }
 
-    public function addRowStyleFirstCell($dataRow, $firstCellStyle) {
+    public function addRowStyleFirstCell($dataRow, $firstCellStyle)
+    {
         $this->throwIfBookIsNotAvailable();
         $this->book->addRowStyleFirstCell($dataRow, $this->rowStyle, $firstCellStyle);
+    }
+
+    public function addMergeCell($startColumn, $numColumns, $startRow, $numRows)
+    {
+        $this->throwIfBookIsNotAvailable();
+        $this->book->addMergeCellToCurrentWorksheet($startColumn, $numColumns, $startRow, $numRows);
     }
 
 }

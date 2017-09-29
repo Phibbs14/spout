@@ -61,6 +61,9 @@ class Style
     /** @var bool Whether the wrap text property was set */
     protected $hasSetWrapText = false;
 
+    protected $hasSetHorizontalAlignment = false;
+    protected $horizontalAlignment;
+
     /**
      * @return int|null
      */
@@ -235,6 +238,18 @@ class Style
         return $this;
     }
 
+    public function setHorizontalAlignment($align)
+    {
+        $this->hasSetHorizontalAlignment = true;
+        $this->horizontalAlignment       = $align;
+        return $this;
+    }
+
+    public function getHorizontalAlignment()
+    {
+        return $this->horizontalAlignment;
+    }
+
     /**
      * @return bool Whether specific font properties should be applied
      */
@@ -301,6 +316,10 @@ class Style
         }
         if (!$this->hasSetWrapText && $baseStyle->shouldWrapText()) {
             $mergedStyle->setShouldWrapText();
+        }
+
+        if (!$this->hasSetWrapText && $baseStyle->getHorizontalAlignment()) {
+            $mergedStyle->setHorizontalAlignment($baseStyle->getHorizontalAlignment());
         }
 
         return $mergedStyle;

@@ -136,4 +136,11 @@ class Workbook extends AbstractWorkbook
         $xlsxRootFolder = $this->fileSystemHelper->getRootFolder();
         $this->fileSystemHelper->deleteFolderRecursively($xlsxRootFolder);
     }
+
+    public function addMergeCellToCurrentWorksheet($startColumn, $numColumns, $startRow, $numRows)
+    {
+        $currentWorksheet = $this->getCurrentWorksheet();
+        $currentWorksheet->addMergeCell($startColumn, $numColumns, $startRow, $numRows);
+    }
+
 }

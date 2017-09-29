@@ -44,6 +44,8 @@ EOD;
 
     protected $columnSettings;
 
+    protected $mergeCells = [];
+
     /**
      * @param \Box\Spout\Writer\Common\Sheet $externalSheet The associated "external" sheet
      * @param string $worksheetFilesFolder Temporary folder where the files to create the XLSX will be stored
@@ -177,6 +179,32 @@ EOD;
     }
 
     /**
+     * Write merge cells to the file if any
+     * <mergeCells><mergeCell ref="A1:C1"/></mergeCells>
+     *
+     * @return  void
+     */
+    private function writeMergeCells()
+    {
+        if (empty($this->mergeCells)) {
+            return;
+        }
+
+        $str = '';
+        foreach ($this->mergeCells as $mergeCell) {
+            // <mergeCell ref="A1:C1"/>
+            $str .= sprintf('<mergeCell ref="%s%s:%s%s"/>',
+                CellHelper::getCellIndexFromColumnIndex($mergeCell['startColumn']),
+                $mergeCell['startRow'],
+                CellHelper::getCellIndexFromColumnIndex($mergeCell['startColumn'] + $mergeCell['numColumns'] - 1),
+                $mergeCell['startRow'] + $mergeCell['numRows'] - 1
+            );
+        }
+
+        fwrite($this->sheetFilePointer, "<mergeCells>$str</mergeCells>");
+    }
+
+    /**
      * Closes the worksheet
      *
      * @return void
@@ -184,6 +212,7 @@ EOD;
     public function close()
     {
         fwrite($this->sheetFilePointer, '</sheetData>');
+        $this->writeMergeCells();
         fwrite($this->sheetFilePointer, '</worksheet>');
         fclose($this->sheetFilePointer);
     }
@@ -253,4 +282,15 @@ EOD;
         // only update the count if the write worked
         $this->lastWrittenRowIndex++;
     }
+
+    public function addMergeCell($startColumn, $numColumns, $startRow, $numRows)
+    {
+        $this->mergeCells[] = [
+            'startColumn' => $startColumn,
+            'numColumns'  => $numColumns,
+            'startRow'    => $startRow,
+            'numRows'     => $numRows,
+        ];
+    }
+
 }
